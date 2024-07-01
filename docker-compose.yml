@@ -1,0 +1,58 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-app
+    container_name: laravel-app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: laravel-app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./berkan:/var/www
+    networks:
+      - app-network
+
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8080:80"
+    volumes:
+      - ./berkan:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - app-network
+
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: unless-stopped
+    tty: true
+    environment:
+      MYSQL_DATABASE: berkan
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: berkan_user
+      MYSQL_PASSWORD: 123456
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    ports:
+      - "3390:3306"
+    networks:
+      - app-network
+    volumes:
+      - dbdata:/var/lib/mysql
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
